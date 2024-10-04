@@ -12,10 +12,10 @@ typedef struct {
     size_t size_of_type;
 } CVector;
 
-int CVector_init(CVector* v, size_t size_of_type) {
+bool CVector_init(CVector* v, size_t size_of_type) {
     if (!v) {
         fprintf(stderr, "Error: CVector_init(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
 
     v->data = NULL;
@@ -23,7 +23,7 @@ int CVector_init(CVector* v, size_t size_of_type) {
     v->capacity = 0;
     v->size_of_type = size_of_type;
 
-    return 1;
+    return true;
 }
 
 bool CVector_empty(CVector* v) {
@@ -34,111 +34,111 @@ bool CVector_empty(CVector* v) {
     return v->size == 0;
 }
 
-int CVector_reserve(CVector* v, size_t new_capacity) {
+bool CVector_reserve(CVector* v, size_t new_capacity) {
     if (!v) {
         fprintf(stderr, "Error: CVector_reserve(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
 
     if (new_capacity == 0) {
         fprintf(stderr, "Warning: CVector_reserve(): new_capacity is zero, not resizing\n");
-        return 1;
+        return true;
     }
 
     if (new_capacity > v->capacity) {
-        byte* new_data = (byte*) malloc(new_capacity * v->size_of_type);
-        if (!new_data) {
+        byte* new_data_buffer = (byte*) malloc(new_capacity * v->size_of_type);
+        if (!new_data_buffer) {
             fprintf(stderr, "Error: CVector_reserve(): Could not malloc()\n");
-            return 0;
+            return false;
         }
 
         if (v->data) {
-            memcpy(new_data, v->data, v->size * v->size_of_type);
+            memcpy(new_data_buffer, v->data, v->size * v->size_of_type);
             free(v->data);
         }
 
-        v->data = new_data;
+        v->data = new_data_buffer;
         v->capacity = new_capacity;
     }
-    return 1;
+    return true;
 }
 
-int CVector_resize(CVector* v, size_t new_size) {
+bool CVector_resize(CVector* v, size_t new_size) {
     if (!v) {
         fprintf(stderr, "Error: CVector_resize(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
 
     if (new_size == v->size) {
         fprintf(stderr, "Warning: CVector_resize(): New size is the same as old size, not resizing\n");
-        return 1;
+        return true;
     }
 
     if (new_size > v->size) {
         if (new_size > v->capacity) {
             if (!CVector_reserve(v, new_size)) {
                 fprintf(stderr, "Error: CVector_resize(): CVector_reserve() failed\n");
-                return 0;
+                return false;
             }
         }
         byte* end = (byte*) v->data + (v->size * v->size_of_type);
         memset(end, 0, (new_size - v->size) * v->size_of_type);
         v->size = new_size;
-        return 1;
+        return true;
     }
 
     if (new_size < v->size) {
         v->size = new_size;
         if (!CVector_shrink_to_fit(v)) {
             fprintf(stderr, "Error: CVector_resize(): CVector_shrink_to_fit() failed\n");
-            return 0;
+            return false;
         }
     }
 
-    return 1;
+    return true;
 }
 
-int CVector_shrink_to_fit(CVector* v) {
+bool CVector_shrink_to_fit(CVector* v) {
     if (!v) {
         fprintf(stderr, "Error: CVector_shrink_to_fit(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
 
     if (CVector_empty(v)) {
-        return 1;
+        return true;
     }
 
     if (v->capacity > v->size) {
-        byte* new_data = (byte*) malloc(v->size * v->size_of_type);
-        if (!new_data) {
+        byte* new_data_buffer = (byte*) malloc(v->size * v->size_of_type);
+        if (!new_data_buffer) {
             fprintf(stderr, "Error: CVector_shrink_to_fit(): Could not malloc()\n");
-            return 0;
+            return false;
         }
 
-        memcpy(new_data, v->data, v->size * v->size_of_type);
+        memcpy(new_data_buffer, v->data, v->size * v->size_of_type);
         free(v->data);
-        v->data = new_data;
+        v->data = new_data_buffer;
         v->capacity = v->size;
     }
 
-    return 1;
+    return true;
 }
 
-int CVector_push_back(CVector* v, const void* element) {
+bool CVector_push_back(CVector* v, const void* element) {
     if (!v) {
         fprintf(stderr, "Error: CVector_push_back(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
     if (!element) {
         fprintf(stderr, "Error: CVector_push_back(): Element pointer is NULL\n");
-        return 0;
+        return false;
     }
 
     if (v->size == v->capacity) {
         size_t new_capacity = (v->capacity == 0) ? 1 : v->capacity + (v->capacity / 2);
         if (!CVector_reserve(v, new_capacity)) {
             fprintf(stderr, "Error: CVector_push_back(): Calling CVector_reserve() failed\n");
-            return 0;
+            return false;
         }
     }
 
@@ -146,18 +146,18 @@ int CVector_push_back(CVector* v, const void* element) {
     memcpy(dest, element, v->size_of_type);
     v->size++;
 
-    return 1;
+    return true;
 }
 
-int CVector_pop_back(CVector* v) {
+bool CVector_pop_back(CVector* v) {
     if (!v) {
         fprintf(stderr, "Error: CVector_pop_back(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
 
     if (CVector_empty(v)) {
         fprintf(stderr, "Error: CVector_pop_back(): Cannot pop, CVector->size is zero\n");
-        return 0;
+        return false;
     }
 
     byte* last = (byte*) v->data + ((v->size - 1) * v->size_of_type);
@@ -171,7 +171,7 @@ int CVector_pop_back(CVector* v) {
         }
     }
 
-    return 1;
+    return true;
 }
 
 byte* CVector_at(CVector* v, size_t i) {
@@ -210,25 +210,25 @@ byte* CVector_back(CVector* v) {
     return (byte*) v->data + ((v->size - 1) * v->size_of_type);
 }
 
-int CVector_insert(CVector* v, size_t i, const void* element) {
+bool CVector_insert(CVector* v, size_t i, const void* element) {
     if (!v) {
         fprintf(stderr, "Error: CVector_insert(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
     if (!element) {
         fprintf(stderr, "Error: CVector_insert(): Element pointer is NULL\n");
-        return 0;
+        return false;
     }
 
     if (i > v->size) {
         fprintf(stderr, "Error: CVector_insert(): Index out of bounds\n");
-        return 0;
+        return false;
     }
 
     if (v->size >= v->capacity) {
         if (!CVector_reserve(v, v->size + 1)) {
             fprintf(stderr, "Error: CVector_insert(): Insertion failed, CVector_reserve() failed\n");
-            return 0;
+            return false;
         }
     }
 
@@ -240,18 +240,18 @@ int CVector_insert(CVector* v, size_t i, const void* element) {
 
     v->size++;
 
-    return 1;
+    return true;
 }
 
-int CVector_erase(CVector* v, size_t i) {
+bool CVector_erase(CVector* v, size_t i) {
     if (!v) {
         fprintf(stderr, "Error: CVector_erase(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
 
     if (i >= v->size) {
         fprintf(stderr, "Error: CVector_erase(): Index out of bounds\n");
-        return 0;
+        return false;
     }
 
     if (i < v->size - 1) {
@@ -271,24 +271,24 @@ int CVector_erase(CVector* v, size_t i) {
         }
     }
 
-    return 1;
+    return true;
 }
 
-int CVector_clear(CVector* v) {
+bool CVector_clear(CVector* v) {
     if (!v) {
         fprintf(stderr, "Error: CVector_clear(): Pointer to CVector is NULL\n");
-        return 0;
+        return false;
     }
 
     if (CVector_empty(v)) {
         fprintf(stderr, "Warning: CVector_clear(): Data empty, not cleaning\n");
-        return 1;
+        return true;
     }
 
     memset(v->data, 0, v->size * v->size_of_type);
     v->size = 0;
 
-    return 1;
+    return true;
 }
 
 void CVector_destroy(CVector* v) {
