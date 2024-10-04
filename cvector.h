@@ -298,5 +298,4 @@ void CVector_destroy(CVector* v) {
     }
 
     free(v->data);
-    free(v);
 }
